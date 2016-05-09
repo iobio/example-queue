@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src='assets/js/iobio.min.js'></script>
+	<script src="assets/js/d3.min.js"></script>
+	<style type="text/css">
+		body { text-align: center;  width: 600px; margin: 100px auto; font-family: Helvetica}
+
+		.button { height: 35px; width: 100px; font-size: 30px; border-radius: 4px; background: #AD0000; margin: 50px auto 10px auto; color:white;}
+		.button:hover { cursor: pointer }
+		.button div { font-size: 15px; color: black; }
+
+		#instructions { font-size: 15px; margin-bottom: 50px; text-align: justify; color: rgb(120,120,120);}
+
+		#running {font-size: 30px; width: 200px; margin: 0px auto; float: left;}
+		#running div { font-size: 16px; }
+
+		#queue {font-size: 30px; width: 200px; margin: 0px auto; float: left;}
+		#queue ul { padding-left: 0px; margin: 0px }
+		#queue ul li { color: rgb(200,200,200); font-size: 16px; list-style: none; }
+		#queue ul li.me { color: black; }
+
+		#results { font-size: 30px; float:right; width: 120px; }
+		#data { margin: 0px auto; font-size: 16px;  text-align: center; }
+	</style>
+</head>
+<body>
+
+	<div class='button' onclick="run(j=j+1)">Run</div>
+	<div id='instructions'>
+		The max number of jobs for this example server is set to 1. Click run multiple times to see jobs get queued. If you open up another tab and send jobs from both then the jobs from the other tab will be shown as gray whereas from your own tab will be shown as black. This is one way to show users where they are in the queue.
+	</div>
+
+	<div id='running'>Running
+	</div>
+	<div id='queue'>
+		Queue
+		<ul></ul>
+	</div>
+	<div id='results'>
+		Results
+		<div id='data'>	</div>
+	</div>
+
+
+	<script type="text/javascript">
+
+
+		var j = 0;
+		// run(j);
+		// run(1);
+
+		function run(i) {
+			var service = 'nv-dev-2.iobio.io/cat/';
+
+			var file = new Blob();
+
+			// console.log('init cmd.id = ' + cmd.id);
+
+			var cmd = new iobio.cmd(service, [file], {
+					writeStream: function(stream) {
+						stream.write('Results ' + i);
+						setTimeout(function(){stream.write('Results ' + i + ' .');}, 600);
+						setTimeout(function(){stream.write('Results ' + i + ' ..');}, 1200);
+						setTimeout(function(){stream.write('Results ' + i  + ' ...');stream.end();}, 1800);
+					}
+				})
+				.on('error', function(err) { console.log(err); })
+				.on('start', function(){
+					d3.select('#running').append('div').attr('id', 'j'+i).html('Job ' + i)
+				})
+				.on('end', function(){ d3.select('#j' + i).remove(); })
+				.on('data', function(data) {
+					var div = d3.select('#results #data').selectAll('#r'+i).data([0])
+					div.enter().append('div').attr('id', 'r'+i)
+					div.html(data); })
+				.on('queue', function(list) {
+					var cmdId = this.id;
+					var html = ""
+					var li = d3.select('#queue ul').selectAll('li').data(JSON.parse(list), function(d) { return d.commandId; })
+
+					li.exit().remove();
+
+					li.enter().append('li')
+						.attr('class', function(d) {
+							return d.commandId==cmdId ? 'me': ''
+						})
+						.html(function(d,i) { return 'Job ' + d.commandId});
+
+					li.attr('class', function(d) {
+							if (d.commandId==cmdId) return 'me'
+							else return this.className;
+						})
+				})
+				.run();
+
+		}
+	</script>
+</body>
+</html>
