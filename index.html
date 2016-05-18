@@ -48,15 +48,12 @@
 
 
 		var j = 0;
-		// run(j);
-		// run(1);
 
 		function run(i) {
 			var service = 'nv-dev-2.iobio.io/cat/';
 
 			var file = new Blob();
 
-			// console.log('init cmd.id = ' + cmd.id);
 
 			var cmd = new iobio.cmd(service, [file], {
 					writeStream: function(stream) {
